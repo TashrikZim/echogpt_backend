@@ -9,6 +9,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { AiProvidersModule } from './ai-providers/ai-providers.module';
 import { ChatModule } from './chat/chat.module';
 import { WebSearchModule } from './web-search/web-search.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { WebSearchModule } from './web-search/web-search.module';
     AiProvidersModule,
     ChatModule,
     WebSearchModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

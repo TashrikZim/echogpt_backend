@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { PrismaService } from './prisma/prisma.service';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,6 +22,10 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Bind global request performance & audit interceptor
+  const prismaService = app.get(PrismaService);
+  app.useGlobalInterceptors(new LoggingInterceptor(prismaService));
 
   // OpenAPI / Swagger Documentation
   const config = new DocumentBuilder()
