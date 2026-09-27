@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { AiProvidersModule } from './ai-providers/ai-providers.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     UsersModule,
     AuthModule,
     SubscriptionsModule,
+    AiProvidersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
