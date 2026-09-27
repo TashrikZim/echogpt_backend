@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { AiProvidersModule } from './ai-providers/ai-providers.module';
 import { ChatModule } from './chat/chat.module';
+import { WebSearchModule } from './web-search/web-search.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ChatModule } from './chat/chat.module';
     SubscriptionsModule,
     AiProvidersModule,
     ChatModule,
+    WebSearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],
