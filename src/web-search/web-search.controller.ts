@@ -1,5 +1,19 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { WebSearchService } from './web-search.service';
 import { PerformSearchDto } from './dto/search.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -22,8 +36,25 @@ export class WebSearchController {
   }
 
   @Get('history')
-  @ApiOperation({ summary: 'Retrieve recent search history for current user' })
+  @ApiOperation({ summary: 'Retrieve full search history for current user' })
   async getHistory(@Request() req: any) {
     return this.webSearchService.getHistory(req.user.id);
+  }
+
+  @Get('recent')
+  @ApiOperation({ summary: 'Retrieve recent search queries (default 5)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 5 })
+  async getRecent(
+    @Request() req: any,
+    @Query('limit') limit?: number,
+  ) {
+    return this.webSearchService.getRecentSearches(req.user.id, limit ? Number(limit) : 5);
+  }
+
+  @Get('suggestions')
+  @ApiOperation({ summary: 'Get auto-complete search suggestions based on keyword' })
+  @ApiQuery({ name: 'q', required: true, type: String, example: 'nest' })
+  async getSuggestions(@Query('q') query: string) {
+    return this.webSearchService.getSuggestions(query);
   }
 }
