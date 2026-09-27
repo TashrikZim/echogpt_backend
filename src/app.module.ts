@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { AiProvidersModule } from './ai-providers/ai-providers.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AiProvidersModule } from './ai-providers/ai-providers.module';
     AuthModule,
     SubscriptionsModule,
     AiProvidersModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
