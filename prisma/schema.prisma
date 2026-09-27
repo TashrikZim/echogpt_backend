@@ -1,0 +1,182 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -------------------------------------------------------------
+// Enums
+// -------------------------------------------------------------
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+}
+
+enum ProviderType {
+  OPENAI
+  CLAUDE
+  GEMINI
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// -------------------------------------------------------------
+// Core User & Auth Models
+// -------------------------------------------------------------
+model User {
+  id                 String         @id @default(uuid())
+  email              String         @unique
+  passwordHash       String
+  fullName           String?
+  role               Role           @default(USER)
+  isEmailVerified    Boolean        @default(false)
+  verificationToken  String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  refreshTokens      RefreshToken[]
+  subscription       Subscription?
+  conversations      Conversation[]
+  webSearches        WebSearch[]
+  apiUsageLogs       ApiUsageLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  revoked    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// -------------------------------------------------------------
+// Subscription & Quota Tracking
+// -------------------------------------------------------------
+model Subscription {
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan               Plan               @default(FREE)
+  status             SubscriptionStatus @default(ACTIVE)
+  dailyRequestLimit  Int                @default(20)
+  currentDayRequests Int                @default(0)
+  lastResetDate      DateTime           @default(now())
+  startDate          DateTime           @default(now())
+  endDate            DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+// -------------------------------------------------------------
+// AI Provider Management
+// -------------------------------------------------------------
+model AiProvider {
+  id              String       @id @default(uuid())
+  name            String
+  type            ProviderType
+  apiKey          String
+  baseUrl         String?
+  modelIdentifier String
+  isActive        Boolean      @default(true)
+  isDefault       Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  messages        ChatMessage[]
+
+  @@map("ai_providers")
+}
+
+// -------------------------------------------------------------
+// Chat & Conversation Models
+// -------------------------------------------------------------
+model Conversation {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String        @default("New Conversation")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  messages  ChatMessage[]
+
+  @@index([userId])
+  @@map("conversations")
+}
+
+model ChatMessage {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  providerId     String?
+  provider       AiProvider?  @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  role           MessageRole
+  content        String       @db.Text
+  tokensUsed     Int?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@map("chat_messages")
+}
+
+// -------------------------------------------------------------
+// Web Search Management
+// -------------------------------------------------------------
+model WebSearch {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query     String
+  results   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([query])
+  @@map("web_searches")
+}
+
+// -------------------------------------------------------------
+// API Usage & Audit Logs (Admin Analytics)
+// -------------------------------------------------------------
+model ApiUsageLog {
+  id             String   @id @default(uuid())
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  endpoint       String
+  method         String
+  statusCode     Int
+  responseTimeMs Int
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@index([endpoint])
+  @@index([createdAt])
+  @@map("api_usage_logs")
+}
