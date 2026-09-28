@@ -15,7 +15,7 @@ import { SendMessageDto, UpdateConversationTitleDto } from './dto/chat.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { QuotaGuard } from '../subscriptions/guards/quota.guard';
 
-@ApiTags('Chat & Conversations')
+@ApiTags('Chat')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard)
 @Controller('chat')

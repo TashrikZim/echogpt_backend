@@ -26,7 +26,7 @@ export class LoggingInterceptor implements NestInterceptor {
         const method = req.method;
         const statusCode = res.statusCode;
 
-        // Skip logging docs and favicon calls to avoid cluttering the audit table
+        // Skip logging docs
         if (endpoint.includes('/api/docs') || endpoint.includes('favicon')) {
           return;
         }
@@ -42,7 +42,7 @@ export class LoggingInterceptor implements NestInterceptor {
             },
           });
         } catch {
-          // Non-blocking: Logging failure should not disrupt API responses
+          // Logging failure should not disrupt API responses
         }
       }),
     );

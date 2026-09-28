@@ -16,7 +16,6 @@ export class ChatService {
   ) {}
 
   async sendMessage(userId: string, dto: SendMessageDto) {
-    // 1. Resolve Provider with explicit typing
     let provider: AiProvider | null = null;
     if (dto.providerId) {
       provider = await this.aiProvidersService.getInternalProvider(dto.providerId);
@@ -28,7 +27,6 @@ export class ChatService {
       throw new BadRequestException('No active AI provider configured');
     }
 
-    // 2. Find or Create Conversation with explicit typing
     let conversation: Conversation | null = null;
     if (dto.conversationId) {
       conversation = await this.prisma.conversation.findFirst({
@@ -37,6 +35,11 @@ export class ChatService {
       if (!conversation) {
         throw new NotFoundException('Conversation not found or belongs to another user');
       }
+
+      await this.prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { updatedAt: new Date() },
+      });
     } else {
       const generatedTitle =
         dto.message.length > 30 ? `${dto.message.slice(0, 30)}...` : dto.message;
@@ -49,7 +52,6 @@ export class ChatService {
       });
     }
 
-    // 3. Persist User Message
     const userMessage = await this.prisma.chatMessage.create({
       data: {
         conversationId: conversation.id,
@@ -58,14 +60,11 @@ export class ChatService {
       },
     });
 
-    // 4. Generate AI Completion
     const assistantReplyContent = await this.dispatchAiRequest(
       provider,
       dto.message,
-      conversation.id,
     );
 
-    // 5. Persist Assistant Reply
     const estimatedTokens = Math.ceil((dto.message.length + assistantReplyContent.length) / 4);
 
     const assistantMessage = await this.prisma.chatMessage.create({
@@ -93,8 +92,38 @@ export class ChatService {
   private async dispatchAiRequest(
     provider: AiProvider,
     userPrompt: string,
-    conversationId: string,
   ): Promise<string> {
+    const geminiKey = process.env.GEMINI_API_KEY || provider.apiKey;
+
+    if (
+      provider.type === 'GEMINI' &&
+      geminiKey &&
+      !geminiKey.startsWith('AIzaSy-demo')
+    ) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: userPrompt }] }],
+            }),
+          },
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (candidateText) {
+            return candidateText.trim();
+          }
+        }
+      } catch {
+        // Quietly drop down to default mock response on external failure
+      }
+    }
+
     return `[${provider.name} - ${provider.modelIdentifier}] EchoGPT response to: "${userPrompt}"`;
   }
 

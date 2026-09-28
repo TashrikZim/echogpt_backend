@@ -8,13 +8,13 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS so the Chrome Extension can communicate with the backend
+ 
   app.enableCors();
 
-  // Versioned API route prefix: http://localhost:3000/api/v1/...
+  // API route prefix
   app.setGlobalPrefix('api/v1');
 
-  // Enforce DTO validation rules and strip unexpected body properties
+  //DTO validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -23,15 +23,23 @@ async function bootstrap() {
     }),
   );
 
-  // Bind global request performance & audit interceptor
+  
   const prismaService = app.get(PrismaService);
   app.useGlobalInterceptors(new LoggingInterceptor(prismaService));
 
-  // OpenAPI / Swagger Documentation
+  //  Swagger Documentation
   const config = new DocumentBuilder()
     .setTitle('EchoGPT Backend REST API')
     .setDescription('Production-ready backend API documentation for EchoGPT Chrome Extension')
     .setVersion('1.0')
+    .addTag('Authentication', 'User registration, login, token rotation, and verification')
+    .addTag('Users', 'User profile, password updates, and account lifecycle')
+    .addTag('Subscriptions', 'Tier plans, request quotas, and subscription updates')
+    .addTag('AI Providers', 'Multi-model provider configurations and health probes')
+    .addTag('Chat', 'Conversational AI engine, multi-turn messages, and token usage')
+    .addTag('Web Search', 'AI-assisted web query execution, suggestions, and history')
+    .addTag('Admin Analytics', 'System-wide usage telemetry, request logs, and metrics')
+    .addTag('System Health', 'Liveness probes and database connection verification')
     .addBearerAuth(
       {
         type: 'http',
@@ -46,7 +54,14 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+
+ 
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      docExpansion: 'none', // Keeps tags collapsed so the list is clean and readable
+    },
+  });
 
   const port = process.env.PORT || 3000;
   await app.listen(port);

@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ChangePasswordDto, UpdateProfileDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -26,12 +27,19 @@ export class UsersService {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(createUserDto.password, saltRounds);
 
+    // Generate random 32-byte hex verification token (expires in 24 hours)
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           email: createUserDto.email,
           passwordHash,
           fullName: createUserDto.fullName,
+          isEmailVerified: false,
+          emailVerificationToken: verificationToken,
+          emailVerificationExpires: tokenExpires,
         },
       });
 
@@ -65,7 +73,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const { passwordHash: _, ...result } = user;
+    const { passwordHash: _, emailVerificationToken: __, ...result } = user;
     return result;
   }
 
@@ -105,7 +113,6 @@ export class UsersService {
         where: { id: userId },
         data: { passwordHash },
       }),
-      // Revoke existing refresh tokens so older sessions are terminated
       this.prisma.refreshToken.updateMany({
         where: { userId, revoked: false },
         data: { revoked: true },

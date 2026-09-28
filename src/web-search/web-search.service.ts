@@ -67,13 +67,13 @@ export class WebSearchService {
     const trimmed = query.trim().toLowerCase();
 
     // Default static common search suggestions
-    const baseSuggestions = [
-      `${trimmed} tutorial`,
-      `${trimmed} documentation`,
-      `${trimmed} nestjs architecture`,
-      `${trimmed} rest api best practices`,
-      `${trimmed} github example`,
-    ];
+const baseSuggestions = [
+  `${trimmed} tutorial`,
+  `${trimmed} guide`,
+  `${trimmed} documentation`,
+  `${trimmed} examples`,
+  `${trimmed} api`,
+];
 
     // Query historical searches that match the prefix
     const historical = await this.prisma.webSearch.findMany({
