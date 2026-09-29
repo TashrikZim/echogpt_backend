@@ -30,7 +30,7 @@ async function bootstrap() {
   //  Swagger Documentation
   const config = new DocumentBuilder()
     .setTitle('EchoGPT Backend REST API')
-    .setDescription('Production-ready backend API documentation for EchoGPT Chrome Extension')
+    .setDescription('backend API documentation')
     .setVersion('1.0')
     .addTag('Authentication', 'User registration, login, token rotation, and verification')
     .addTag('Users', 'User profile, password updates, and account lifecycle')
@@ -59,7 +59,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
-      docExpansion: 'none', // Keeps tags collapsed so the list is clean and readable
+      docExpansion: 'none', 
     },
   });
 

@@ -120,7 +120,7 @@ export class ChatService {
           }
         }
       } catch {
-        // Quietly drop down to default mock response on external failure
+        //e
       }
     }
 
